@@ -21,7 +21,7 @@ a React web client and a Flutter client for Android and web.
 | **Anomaly Detection**       | Isolation Forest flags overspending, budget violations, outlier transactions, high-risk departments                     |
 | **Forecasting**             | Predicts next-quarter expenditure, department budget needs, and annual trends                                           |
 | **Reports**                 | Quarterly / Department / Summary reports exportable as PDF or Excel                                                     |
-| **About**                   | Project description, architecture, tech stack, and team info                                                            |
+| **About**                   | Project description, architecture, and tech stack                                                                       |
 
 ---
 
@@ -115,81 +115,100 @@ college-financial-rag/
 
 ## 📱 Flutter app (Android and web)
 
-Install the Flutter stable SDK and Android Studio (including an Android SDK and
-emulator). From the app directory, install the app dependencies:
+The Flutter client supports Android phones, Android emulators, and web. Install
+the current stable Flutter SDK (which includes Dart) and Android Studio with the
+Android SDK. For a physical phone, enable Developer options and USB debugging;
+for web, install Google Chrome. Check the setup and accept Android SDK licenses:
 
 ```powershell
+flutter doctor
+flutter doctor --android-licenses
 Set-Location flutter_app
 flutter pub get
 ```
 
-Start the FastAPI backend in a separate terminal. To run Flutter web:
+Start the FastAPI backend in a separate terminal using the steps in
+[Getting Started](#-getting-started). Keep it running while using the app.
+
+### Run the app
+
+From `flutter_app`, list available devices and run on an Android emulator or
+USB-connected phone:
+
+```powershell
+flutter devices
+flutter run -d <device-id> -t lib/main.dart
+```
+
+For Flutter web, run:
 
 ```powershell
 flutter run -d chrome -t lib/main.dart --web-port 8080
 ```
 
-To run on an Android emulator:
+The app's default backend URL is `http://10.0.2.2:8000` on Android and
+`http://127.0.0.1:8000` on web. On the sign-in screen, choose **Configure
+server** to change it. The app adds `/api` automatically, so enter the server
+root URL, such as `http://192.168.1.10:8000`.
+
+### Build and install an Android APK
+
+Build a debug APK from `flutter_app`:
 
 ```powershell
-flutter run -d <emulator-id> -t lib/main.dart
+flutter pub get
+flutter build apk --debug
 ```
 
-By default, the app uses `http://127.0.0.1:8000` for web and
-`http://10.0.2.2:8000` for the Android emulator. On the sign-in screen, choose
-**Configure server** to enter a reachable backend URL for a physical device (for
-example, `http://192.168.1.10:8000`). The backend must allow network access from
-that device. Use HTTPS and a production API host for deployed apps; local HTTP is
-for development only.
+The APK is at `build\app\outputs\flutter-apk\app-debug.apk`. Install it directly
+to a USB-connected device with Android platform tools:
 
-### Build and install a development APK on your phone
+```powershell
+adb install -r build\app\outputs\flutter-apk\app-debug.apk
+```
 
-1. Install Android Studio and its Android SDK, then accept the Android SDK licenses:
+Alternatively, transfer the APK to the phone, open it, and approve installation
+from that source when Android prompts. This is a development build, not a Play
+Store release.
 
-   ```powershell
-   flutter doctor --android-licenses
-   flutter doctor
-   ```
+### Connect a physical phone to the local backend
 
-2. Start the backend so devices on your private Wi-Fi can reach it. In `backend`,
-   run:
+The Android emulator can use `10.0.2.2` to reach the development computer. A
+physical phone needs the computer's private network address:
 
-   ```powershell
-   .\.venv\Scripts\python.exe -m uvicorn app.main:app --host 0.0.0.0 --port 8000
-   ```
-
-   Connect the PC and phone to the same trusted Wi-Fi. Find the PC's private IPv4
-   address with `ipconfig`. If Windows Firewall blocks the connection, allow
-   inbound TCP port 8000 on the **Private** network only.
-
-3. Build the debug APK from `flutter_app`:
+1. Connect the phone and computer to the same trusted Wi-Fi network. In the
+   `backend` directory, start the API so it accepts connections from the LAN:
 
    ```powershell
-   flutter pub get
-   flutter build apk --debug
+   .\venv\Scripts\python.exe -m uvicorn app.main:app --host 0.0.0.0 --port 8000
    ```
 
-   The APK is `build\app\outputs\flutter-apk\app-debug.apk`.
+2. Run `ipconfig` on the computer and note its private IPv4 address. If Windows
+   Firewall blocks the connection, allow inbound TCP port 8000 on the **Private**
+   network only.
 
-4. Transfer that APK to the phone by USB or a trusted file-sharing method. Open
-   it on the phone and allow installation from that source when Android prompts.
-   This is a debug/test build, not a Play Store release.
+3. In the app, choose **Configure server** and enter
+   `http://<PC-private-IPv4>:8000` (replace the placeholder with the address
+   from `ipconfig`). The backend computer must remain on and reachable while the
+   app is using it.
 
-5. Open **Configure server** on the app's sign-in page and enter
-   `http://<PC-private-IPv4>:8000` (for example, replace the placeholder with the
-   IPv4 address shown by `ipconfig`). Sign in with an account from the backend.
-   The PC/backend must stay on and on the same network while the app uses this
-   local server.
+### Sign in and use the app
 
-For testing on USB-connected Android, enable USB debugging and check
-`flutter devices` before building/running. A production APK needs a deployed HTTPS
-backend and a private release-signing key; do not distribute a debug APK as a
-production build.
+- Sign in with an account already provisioned by the backend, or use the
+  **Create accounts-staff account** option on the sign-in screen. Signup asks
+  for a name, email, password (at least eight characters), and optionally a
+  department. Public signup creates an accounts-staff account; privileged roles
+  must be provisioned through the trusted backend setup process.
+- Use the app navigation to open the dashboard, analytics, anomaly detection,
+  forecasts, financial assistant, and reports. Upload supported CSV/Excel
+  financial data or audit PDFs, then view results and export available PDF/Excel
+  reports.
+- Keep the backend running during use. For a deployed app, configure a deployed
+  HTTPS API and create a signed release build; do not distribute the debug APK
+  as a production app.
 
-The Flutter client includes login and accounts-staff signup, dashboard, analytics,
-anomaly detection, forecasting, financial chat, CSV/Excel and audit-PDF upload,
-report management, and PDF/Excel summary export. Flutter web development uses port
-8080, which is included in the backend's local CORS allowlist.
+Flutter web development uses port 8080, which is included in the backend's local
+CORS allowlist.
 
 ---
 
@@ -257,14 +276,11 @@ npm run dev
 
 App: **http://localhost:5173** (proxies `/api` to the backend on port 8000)
 
-### 3. Demo Logins (created by `seed_data.py`)
+### 3. Sign in
 
-| Role           | Email                 | Password      |
-| -------------- | --------------------- | ------------- |
-| Admin          | admin@college.edu     | Admin@123     |
-| Accounts Staff | accounts@college.edu  | Accounts@123  |
-| HOD (AIML)     | hod.aiml@college.edu  | Hod@123       |
-| Principal      | principal@college.edu | Principal@123 |
+Use an account provisioned by the backend setup process, or create an
+accounts-staff account from the Flutter app's sign-in screen. Public signup
+does not grant administrator or other privileged roles.
 
 ---
 
@@ -314,14 +330,3 @@ plus the full FastAPI app (auth, RBAC enforcement, all 8 routers) via `TestClien
 has been installed, type-checked with `tsc`, and built with `vite build` with zero errors.
 
 ---
-
-## 👥 Team — Batch No. 7
-
-- Bibi Zainab M Saikalgar — 4BD23AI016
-- Dashami C A — 4BD23AI025
-- Nikitha M Koujalagi — 4BD23AI056
-- Payal Pradeep Jain — 4BD23AI062
-
-**Guide:** Dr. Mallikarjuna S B, Prof. & Head, Dept. of AI & ML
-**Coordinator:** Dr. Naveen Kumar K R, Associate Professor
-Bapuji Institute of Engineering and Technology, Davangere
