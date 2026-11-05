@@ -1,0 +1,52 @@
+# --- Python / Backend ---
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+
+backend/app/data/*.db
+backend/app/data/*.csv
+backend/*.db
+backend/app/uploads/*
+!backend/app/uploads/.gitkeep
+backend/app/reports_storage/*
+!backend/app/reports_storage/.gitkeep
+backend/app/vectorstore/*
+!backend/app/vectorstore/.gitkeep
+backend/.env
+
+# --- Node / Frontend ---
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+npm-debug.log*
+
+# --- Flutter ---
+flutter_app/.dart_tool/
+flutter_app/.flutter-plugins
+flutter_app/.flutter-plugins-dependencies
+flutter_app/.packages
+flutter_app/build/
+flutter_app/android/.gradle/
+flutter_app/android/local.properties
+flutter_app/ios/Flutter/.last_build_id
+
+# --- OS / Editor ---
+.DS_Store
+.vscode/
+.idea/
+*.log
+*.tsbuildinfo
+
+# --- Generated project inventories ---
+/all_files.txt
+/backend_tree.txt
+/frontend_tree.txt
+/project_tree.txt
+
+# Local financial data not approved for public release
+/sample_datasets/BIET_Financial_Dataset.csv
