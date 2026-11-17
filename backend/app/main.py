@@ -13,7 +13,10 @@ Run locally:
 
 Docs available at: http://localhost:8000/docs
 """
-from fastapi import FastAPI
+from pathlib import Path
+
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
@@ -34,6 +37,8 @@ app = FastAPI(
     version="2.0.0",
 )
 
+FRONTEND_DIST = Path(__file__).resolve().parents[2] / "frontend" / "dist"
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.ALLOWED_ORIGINS,
@@ -50,6 +55,9 @@ def on_startup():
 
 @app.get("/", tags=["Health"])
 def root():
+    index_file = FRONTEND_DIST / "index.html"
+    if index_file.is_file():
+        return FileResponse(index_file)
     return {
         "status": "ok",
         "app": settings.APP_NAME,
@@ -71,3 +79,18 @@ app.include_router(forecast.router)
 app.include_router(rag.router)
 app.include_router(reports.router)             # report generation/export (PDF/Excel)
 app.include_router(report_management.router)   # report CRUD / ownership (list/get/delete)
+
+
+if FRONTEND_DIST.is_dir():
+    @app.get("/{full_path:path}", include_in_schema=False)
+    def serve_frontend(full_path: str):
+        if full_path == "api" or full_path.startswith("api/"):
+            raise HTTPException(status_code=404, detail="Not Found")
+        requested_file = (FRONTEND_DIST / full_path).resolve()
+        try:
+            requested_file.relative_to(FRONTEND_DIST.resolve())
+        except ValueError:
+            raise HTTPException(status_code=404, detail="Not Found")
+        if requested_file.is_file():
+            return FileResponse(requested_file)
+        return FileResponse(FRONTEND_DIST / "index.html")
