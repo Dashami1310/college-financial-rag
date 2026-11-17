@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { authApi } from '../api/endpoints'
 import { apiErrorMessage } from '../api/client'
 
 const DEMO_ACCOUNTS = [
@@ -15,6 +16,9 @@ export default function LoginPage() {
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [name, setName] = useState('')
+  const [department, setDepartment] = useState('')
+  const [isRegistering, setIsRegistering] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -23,6 +27,15 @@ export default function LoginPage() {
     setError('')
     setLoading(true)
     try {
+      if (isRegistering) {
+        await authApi.register({
+          name,
+          email,
+          password,
+          role: 'accounts_staff',
+          department: department || undefined,
+        })
+      }
       await login(email, password)
       navigate('/')
     } catch (err) {
@@ -77,10 +90,35 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <h2 className="font-display text-2xl font-semibold text-parchment">Sign in</h2>
-          <p className="mt-1 text-sm text-parchment/50">Access your institution's financial command center.</p>
+          <h2 className="font-display text-2xl font-semibold text-parchment">
+            {isRegistering ? 'Create account' : 'Sign in'}
+          </h2>
+          <p className="mt-1 text-sm text-parchment/50">
+            {isRegistering
+              ? 'Create an accounts-staff account to get started.'
+              : "Access your institution's financial command center."}
+          </p>
 
           <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+            {isRegistering && (
+              <>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-parchment/60">Name</label>
+                  <input
+                    type="text" required minLength={2} maxLength={120} value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="input-field" placeholder="Your name"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-parchment/60">Department (optional)</label>
+                  <input
+                    type="text" value={department} onChange={(e) => setDepartment(e.target.value)}
+                    className="input-field" placeholder="Your department"
+                  />
+                </div>
+              </>
+            )}
             <div>
               <label className="mb-1.5 block text-xs font-medium text-parchment/60">Email address</label>
               <input
@@ -91,7 +129,8 @@ export default function LoginPage() {
             <div>
               <label className="mb-1.5 block text-xs font-medium text-parchment/60">Password</label>
               <input
-                type="password" required value={password} onChange={(e) => setPassword(e.target.value)}
+                type="password" required minLength={isRegistering ? 8 : undefined}
+                value={password} onChange={(e) => setPassword(e.target.value)}
                 className="input-field" placeholder="••••••••"
               />
             </div>
@@ -103,11 +142,19 @@ export default function LoginPage() {
             )}
 
             <button type="submit" disabled={loading} className="btn-primary w-full justify-center">
-              {loading ? 'Signing in…' : 'Sign in'}
+              {loading ? 'Please wait…' : isRegistering ? 'Create account' : 'Sign in'}
             </button>
           </form>
 
-          <div className="mt-8 rounded-xl border border-ink-600/60 bg-ink-800/40 p-4">
+          <button
+            type="button"
+            className="mt-4 w-full text-center text-xs text-ledger-300 hover:text-ledger-200"
+            onClick={() => { setError(''); setIsRegistering(!isRegistering) }}
+          >
+            {isRegistering ? 'Already have an account? Sign in' : 'New here? Create an accounts-staff account'}
+          </button>
+
+          {!isRegistering && <div className="mt-8 rounded-xl border border-ink-600/60 bg-ink-800/40 p-4">
             <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-parchment/40">Demo Accounts (RBAC)</p>
             <div className="space-y-2">
               {DEMO_ACCOUNTS.map((acc) => (
@@ -122,7 +169,7 @@ export default function LoginPage() {
                 </button>
               ))}
             </div>
-          </div>
+          </div>}
         </div>
       </div>
     </div>
